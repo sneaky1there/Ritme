@@ -10,7 +10,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.InputType
 import android.view.View
-import android.view.WindowManager
 import android.widget.*
 import androidx.activity.ComponentActivity
 import androidx.health.connect.client.HealthConnectClient
@@ -20,7 +19,6 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
@@ -50,7 +48,6 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE)
         pendingPair=savedInstanceState?.getString("pair") ?: intent.data?.toString()
         render()
     }
@@ -84,11 +81,30 @@ class MainActivity : ComponentActivity() {
         scroll.addView(content)
         scroll.setOnApplyWindowInsetsListener {v,i->v.setPadding(i.systemWindowInsetLeft,i.systemWindowInsetTop,i.systemWindowInsetRight,i.systemWindowInsetBottom);i}
         setContentView(scroll)
-        label(content,"r.  ritme",32f,green,true)
+        val top=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL;content.addView(this,LinearLayout.LayoutParams(-1,-2))}
+        label(top,"r.  ritme",32f,green,true).also{it.layoutParams=LinearLayout.LayoutParams(0,-2,1f)}
+        val connection=store.connection()
+        if(connection!=null) button(top,"Instellingen",true){startActivity(Intent(this,SettingsActivity::class.java))}.also{
+            it.layoutParams=LinearLayout.LayoutParams(-2,-2)
+        }
+        if(connection!=null) {
+            label(content,"Vandaag",30f,ink,true)
+            label(content,"Registreer je voeding of bekijk je voortgang.",16f,muted)
+            val nutrition=card(Color.rgb(222,234,205))
+            label(nutrition,"Voeding",22f,ink,true)
+            label(nutrition,"Voeg een maaltijd toe, scan een barcode of bekijk wat je vandaag hebt gegeten.",15f,muted)
+            button(nutrition,"Voeding registreren"){startActivity(Intent(this,NutritionActivity::class.java))}
+            val overview=card()
+            label(overview,"Mijn overzicht",20f,ink,true)
+            label(overview,"Bekijk je gewicht, stappen, slaap en trainingen op je website.",15f,muted)
+            button(overview,"Overzicht openen",true){openLink(connection.server)}
+            message?.let {label(content,it,14f,muted)}
+            label(content,"Ritme 1.2 · jouw gegevens, jouw website",12f,muted)
+            return
+        }
         label(content,"JOUW HEALTH CONNECT-KOPPELING",11f,muted,true)
         label(content,"Minder invullen.\nMeer overzicht.",30f,ink,true)
         label(content,"Stappen, gewicht en slaap veilig naar je eigen fitnessoverzicht.",16f,muted)
-        val connection=store.connection()
         val state=card(Color.rgb(222,234,205))
         label(state,if(connection==null)"Nog niet gekoppeld" else "Verbonden met je website",19f,ink,true)
         connection?.let {label(state,it.server,14f,green)}
@@ -128,40 +144,8 @@ class MainActivity : ComponentActivity() {
             label(health,if(availability==HealthConnectClient.SDK_UNAVAILABLE)"Health Connect is niet beschikbaar op dit toestel of profiel." else "Installeer of werk Health Connect bij om verder te gaan.",15f,muted)
             button(health,"Health Connect installeren",true){openLink("https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata")}
         }
-        if(connection!=null) {
-            val sync=card()
-            label(sync,"2  Alles bijwerken",20f,ink,true)
-            label(sync,"Controleert de laatste 28 dagen opnieuw, inclusief wijzigingen. Handmatige invoer blijft behouden. Je website gebruikt ${connection.timezone} voor de dagindeling.",15f,muted)
-            button(sync,"Nu synchroniseren") {runTask {SyncEngine.sync(this@MainActivity,false){status.text=it}}}
-            val toggle=Switch(this).apply {
-                text="Automatisch, ongeveer elke 6 uur";textSize=15f;setTextColor(ink);minHeight=dp(60);isChecked=store.background;isEnabled=!busy
-                sync.addView(this,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(12)})
-            }
-            toggle.setOnCheckedChangeListener{_,enabled->
-                if(!enabled) {store.background=false;SyncEngine.schedule(this,false)}
-                else if(availability!=HealthConnectClient.SDK_AVAILABLE || !HealthReader(this).backgroundAvailable()) {
-                    toggle.isChecked=false;message="Achtergrondtoegang is op dit toestel niet beschikbaar. Gebruik Nu synchroniseren.";render()
-                } else {requestBackground=true;permissions.launch(setOf(HealthReader.background))}
-            }
-            label(sync,"Android bepaalt het precieze moment. Zonder achtergrondtoestemming werkt de knop hierboven als de app open is.",13f,muted)
-            button(sync,"Mijn fitnessoverzicht openen",true){openLink(connection.server)}
-            button(sync,"Voeding registreren",true){startActivity(Intent(this,NutritionActivity::class.java))}
-            button(sync,"Telefoon ontkoppelen",true){
-                AlertDialog.Builder(this).setTitle("Telefoon ontkoppelen?").setMessage("Synchronisatie stopt. Eerder verstuurde gegevens blijven op je website staan.")
-                    .setNegativeButton("Annuleren",null).setPositiveButton("Ontkoppelen"){_,_->
-                        runTask {
-                            SyncEngine.mutex.withLock {
-                                SyncEngine.schedule(this@MainActivity,false)
-                                val revoked=try{ServerApi.post(connection.server,"revoke",JSONObject(),connection.token);true}catch(_:Exception){false}
-                                store.clear();pendingPair=null
-                                if(revoked)"Telefoon ontkoppeld." else "Lokaal ontkoppeld. Trek de telefoon ook op je website in: de server was niet bereikbaar."
-                            }
-                        }
-                    }.show()
-            }
-        }
         button(content,"Privacy & gegevensgebruik",true){startActivity(Intent(this,PrivacyActivity::class.java))}
-        label(content,"Ritme 1.0 · jouw gegevens, jouw website",12f,muted)
+        label(content,"Ritme 1.2 · jouw gegevens, jouw website",12f,muted)
     }
     private fun confirmPair(value:String) {
         if(store.connection()!=null){message="Ontkoppel eerst je huidige website.";render();return}
@@ -174,7 +158,7 @@ class MainActivity : ComponentActivity() {
                     val token=response.getString("token");require(token.matches(Regex("[a-f0-9]{64}")))
                     val timezone=response.getString("timezone");Protocol.zone(timezone)
                     store.save(Connection(pair.first,token,timezone));pendingPair=null
-                    "Gekoppeld. Kies toestemming en tik op Nu synchroniseren."
+                    "Gekoppeld. Je kunt Health Connect beheren via Instellingen."
                 }
             }.show()
     }
