@@ -8,7 +8,6 @@ import android.widget.TextView
 class PrivacyActivity: Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE, android.view.WindowManager.LayoutParams.FLAG_SECURE)
         val text = TextView(this).apply {
             textSize=17f; setPadding(28,70,28,60)
             text="""Ritme · privacy & gegevens
@@ -27,7 +26,7 @@ Je kunt toestemming intrekken in Health Connect en synchronisatie stoppen in dez
 
 Voor vragen of verwijdering gebruik je het beheer van je eigen website. Deze persoonlijke app heeft geen centrale Ritme-cloud of externe gegevensbeheerder.
 
-Versie 1.0 · 3 september 2026"""
+Versie 1.2.0 · 13 september 2026"""
         }
         val scroll=ScrollView(this).apply{addView(text)}
         scroll.setOnApplyWindowInsetsListener {v,i->v.setPadding(i.systemWindowInsetLeft,i.systemWindowInsetTop,i.systemWindowInsetRight,i.systemWindowInsetBottom);i}
