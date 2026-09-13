@@ -1,10 +1,10 @@
-# Ritme Android 1.1.2
+# Ritme Android 1.2.0
 
 Native Kotlin-app voor een persoonlijke Ritme/PHP-installatie. Leest stappen, gewicht en slaap uit Health Connect en verstuurt dagwaarden via HTTPS. De app bevat daarnaast een eigen voedingsdagboek met barcodescanner, productendatabase en berekening van calorieën en macro's. Minimaal Android 9; compile en target SDK 35. Geen Compose of centrale clouddienst.
 
 ## Installeren
 
-Gebruik de ondertekende `Ritme-1.1.2.apk` uit de meest recente GitHub Release en het installatiebestand in het serverpakket. Werk de website en database bij voordat je voeding registreert.
+Gebruik de ondertekende `Ritme-1.2.0.apk` uit de meest recente GitHub Release en het installatiebestand in het serverpakket. Werk de website en database bij voordat je voeding registreert.
 
 ## Zelf bouwen
 
@@ -33,7 +33,8 @@ De lokale release-keystore staat in de private, uitgesloten map `signing/`, met 
 - `SecureStore`: versleutelde koppelsleutel via Android Keystore.
 - `ServerApi`: strikt HTTPS, geen redirects met tokens, begrensde responses en timeouts.
 - `SyncEngine`/`SyncWorker`: handmatige/periodieke sync, onderlinge uitsluiting, beperkte retries.
-- `MainActivity`: koppeling, toestemming, status, handmatig/automatisch bijwerken, ontkoppeling.
+- `MainActivity`: eenvoudige startpagina met voeding als primaire actie en toegang tot het fitnessoverzicht.
+- `SettingsActivity`: Health Connect-toestemming, handmatige en automatische synchronisatie, privacy en ontkoppeling.
 - `PrivacyActivity`: privacyverklaring en verplichte Health Connect-intents voor oude/nieuwe Android-versies.
 
 Geen gezondheidsmetingen worden lokaal opgeslagen. Alleen koppeling, achtergrondvoorkeur en tekstuele status. Geen Health Connect-schrijfrechten of geschiedenis ouder dan 28 dagen aangevraagd. Camera wordt uitsluitend voor QR gebruikt. De app vraagt geen contacten, locatie of notificatierechten.
