@@ -1,0 +1,35 @@
+<?php
+require __DIR__.'/../includes/bootstrap.php';require_coach_or_admin('training');require __DIR__.'/../includes/layout.php';require __DIR__.'/../includes/progress.php';
+$from=(string)config('HEVY_IMPORT_FROM_DATE');
+$names=query("SELECT DISTINCT workout_name FROM workouts WHERE source='hevy' AND date>=? ORDER BY workout_name",[$from])->fetchAll(PDO::FETCH_COLUMN);
+$selected=scalar($_GET,'workout','');
+if($selected!==''&&!in_array($selected,$names,true))throw new InvalidArgumentException('Kies een bestaande workout.');
+$params=[$from];$where="source='hevy' AND date>=?";
+if($selected!==''){$where.=' AND workout_name=?';$params[]=$selected;}
+$workouts=query('SELECT id,date,started_at,workout_name,duration_minutes,total_volume FROM workouts WHERE '.$where.' ORDER BY started_at DESC,id DESC',$params)->fetchAll();
+$setsByWorkout=[];
+if($workouts){$ids=array_column($workouts,'id');$marks=implode(',',array_fill(0,count($ids),'?'));$sets=query('SELECT * FROM workout_sets WHERE workout_id IN ('.$marks.') ORDER BY workout_id,exercise_index,set_index',$ids)->fetchAll();foreach($sets as $set)$setsByWorkout[$set['workout_id']][]=$set;}
+$progress=recent_progress($from,$selected===''?null:$selected);
+$chartParams=[$from];$chartFilter='';
+if($selected!==''){$chartFilter=' AND w.workout_name=?';$chartParams[]=$selected;}
+$chartRows=query("SELECT s.exercise_external_id,s.exercise_name,w.date,MAX(s.weight_kg) AS max_weight FROM workout_sets s JOIN workouts w ON w.id=s.workout_id WHERE w.source='hevy' AND w.date>=? AND s.set_type='normal' AND s.weight_kg IS NOT NULL".$chartFilter." GROUP BY s.exercise_external_id,s.exercise_name,w.date ORDER BY s.exercise_name,w.date",$chartParams)->fetchAll();
+$exerciseCharts=[];
+foreach($chartRows as $row){
+    $key=$row['exercise_external_id'];
+    if(!isset($exerciseCharts[$key]))$exerciseCharts[$key]=['name'=>$row['exercise_name'],'type'=>'normal','points'=>[],'heaviest'=>null,'heaviest_date'=>null];
+    $weight=(float)$row['max_weight'];
+    $exerciseCharts[$key]['points'][]=['date'=>$row['date'],'weight'=>$weight];
+    if($exerciseCharts[$key]['heaviest']===null||$weight>=$exerciseCharts[$key]['heaviest']){
+        $exerciseCharts[$key]['heaviest']=$weight;$exerciseCharts[$key]['heaviest_date']=$row['date'];
+    }
+}
+usort($exerciseCharts,fn($a,$b)=>strnatcasecmp($a['name'],$b['name']));
+page_start('Trainingsoverzicht');?>
+<div class="heading"><div><p class="eyebrow">VANAF <?=e((new DateTimeImmutable($from))->format('d-m-Y'))?></p><h1>Ontwikkeling krachttraining.</h1><p class="muted">Alleen je huidige trainingsschema. Vergelijk per workout of bekijk het volledige schema.</p></div><span class="badge"><?=admin()?'Persoonlijk overzicht':'Coach · alleen lezen'?></span></div>
+<form class="card range" method="get"><label>Workout<select name="workout"><option value="">Alle workouts</option><?php foreach($names as $name):?><option value="<?=e($name)?>" <?=$selected===$name?'selected':''?>><?=e($name)?></option><?php endforeach;?></select></label><button class="primary">Tonen</button><a class="secondary" href="<?=e(url('coach.php'))?>">Terug naar weekoverzicht</a></form>
+<section class="stats"><article class="stat accent"><span>Workouts</span><strong><?=count($workouts)?></strong><p>Sinds <?=e((new DateTimeImmutable($from))->format('d-m-Y'))?></p></article><article class="stat"><span>Trainingsvolume</span><strong><?=display_number(array_sum(array_map(fn($w)=>(float)($w['total_volume']??0),$workouts)),0)?><small> kg</small></strong><p>Niet-warming-up gewicht × reps</p></article><article class="stat"><span>Geselecteerd</span><strong class="training-name"><?=e($selected?:'Alles')?></strong><p><?=count($names)?> workoutnamen beschikbaar</p></article></section>
+<?php if($exerciseCharts):?><section><div class="section-heading"><div><h2>Gewicht per oefening</h2><p class="muted">Zwaarste normale set per trainingsdatum.</p></div></div><div class="chart-grid exercise-chart-grid" data-exercise-charts="<?=e(json_encode($exerciseCharts,JSON_THROW_ON_ERROR))?>"><?php foreach($exerciseCharts as $index=>$exercise):?><article class="card chart-card"><div class="section-heading"><div><h2><?=e($exercise['name'])?></h2><span class="badge">Type: normal</span></div><div class="exercise-maximum"><strong><?=display_number($exercise['heaviest'])?> kg</strong><span><?=e((new DateTimeImmutable($exercise['heaviest_date']))->format('d-m-Y'))?></span></div></div><div class="chart-box"><canvas id="exercise-chart-<?=$index?>" role="img" aria-label="Zwaarste normale gewicht per datum voor <?=e($exercise['name'])?>"></canvas></div></article><?php endforeach;?></div></section><?php else:?><section class="card"><h2>Gewicht per oefening</h2><p class="muted">Er zijn nog geen normale sets met gewicht voor deze selectie.</p></section><?php endif;?>
+<script src="<?=e(url('assets/js/chart.umd.min.js'))?>" defer></script><script src="<?=e(url('assets/js/training.js'))?>" defer></script>
+<?php if($progress):?><section class="card"><h2>Progressie per oefening</h2><p class="muted">Zwaarste werkset in de laatste twee relevante sessies. Meer gewicht met minstens evenveel herhalingen, of meer herhalingen met minstens hetzelfde gewicht, telt als progressie.</p><div class="table-wrap"><table><thead><tr><th>Oefening</th><th>Vorige sessie</th><th>Laatste sessie</th><th>Vergelijking</th></tr></thead><tbody><?php foreach($progress as $item):?><tr><td><?=e($item['name'])?></td><?php foreach(['previous','current'] as $key):?><td><?=display_number($item[$key]['weight_kg'])?> kg × <?=e($item[$key]['reps'])?><span class="unit"><?=e(substr($item[$key]['started_at'],0,10))?> · <?=e($item[$key]['workout_name'])?></span></td><?php endforeach;?><td><?=e($item['result'])?></td></tr><?php endforeach;?></tbody></table></div></section><?php else:?><section class="card"><h2>Progressie per oefening</h2><p class="muted">Voor een vergelijking zijn minimaal twee relevante sessies met gewicht en herhalingen nodig.</p></section><?php endif;?>
+<section class="card"><h2>Workouts en sets</h2><?php if(!$workouts):?><p class="muted">Geen workouts gevonden vanaf deze startdatum.</p><?php endif;?><?php foreach($workouts as $workout):?><details><summary><strong><?=e($workout['date'].' · '.$workout['workout_name'])?></strong> · <?=display_number($workout['duration_minutes'],0)?> min · <?=display_number($workout['total_volume'],0)?> kg</summary><div class="table-wrap"><table><thead><tr><th>Oefening</th><th>Set</th><th>Type</th><th>Gewicht</th><th>Reps</th><th>Afstand</th><th>Duur</th><th>RPE</th></tr></thead><tbody><?php foreach($setsByWorkout[$workout['id']]??[] as $set):?><tr><td><?=e($set['exercise_name'])?></td><td><?=(int)$set['set_index']+1?></td><td><?=e($set['set_type'])?></td><td><?=display_number($set['weight_kg'])?> kg</td><td><?=display_number($set['reps'],0)?></td><td><?=display_number($set['distance'],0)?> m</td><td><?=display_number($set['duration_seconds'],0)?> sec</td><td><?=display_number($set['rpe'])?></td></tr><?php endforeach;?></tbody></table></div></details><?php endforeach;?></section>
+<?php page_end();

@@ -1,0 +1,4 @@
+config/config.php
+logs/*
+!logs/.gitkeep
+*.zip
