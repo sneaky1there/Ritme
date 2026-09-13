@@ -28,7 +28,7 @@ class NutritionActivity : ComponentActivity() {
     private var date=LocalDate.now();private var day:JSONObject?=null;private var products=JSONArray();private var selected:JSONObject?=null
     private var message:String?=null;private var busy=false;private var createProduct=false;private var scannedBarcode="";private var searchText=""
     private val scan=registerForActivityResult(ScanContract()){result->result.contents?.let{barcode->scannedBarcode=barcode.trim();findBarcode(scannedBarcode)}}
-    override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);WindowCompat.setDecorFitsSystemWindows(window,true);window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);window.setFlags(WindowManager.LayoutParams.FLAG_SECURE,WindowManager.LayoutParams.FLAG_SECURE);if(store.connection()==null){finish();return};loadDay()}
+    override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);WindowCompat.setDecorFitsSystemWindows(window,true);window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);if(store.connection()==null){finish();return};loadDay()}
     private fun dp(v:Int)=(v*resources.displayMetrics.density).toInt()
     private fun shape(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
     private fun label(parent:LinearLayout,text:String,size:Float=16f,color:Int=ink,bold:Boolean=false)=TextView(this).apply{this.text=text;textSize=size;setTextColor(color);if(bold)setTypeface(typeface,Typeface.BOLD);setPadding(0,dp(4),0,dp(8));parent.addView(this)}
