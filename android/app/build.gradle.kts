@@ -2,7 +2,7 @@ plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
 android {
     namespace = "nl.ritme.health"
     compileSdk = 35
-    defaultConfig { applicationId = "nl.ritme.health"; minSdk = 28; targetSdk = 35; versionCode = 5; versionName = "1.2.0" }
+    defaultConfig { applicationId = "nl.ritme.health"; minSdk = 28; targetSdk = 35; versionCode = 6; versionName = "1.2.1" }
     signingConfigs {
         create("release") {
             storeFile = file(System.getenv("RITME_KEYSTORE") ?: "../signing/ritme-release.jks")
