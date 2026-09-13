@@ -18,3 +18,7 @@ Commit nooit `config.php`, API-sleutels, databasewachtwoorden of Android-keystor
 ## Status
 
 Ritme is in actieve ontwikkeling. Databasewijzigingen staan in `server/sql/migrations/`.
+
+## Licentie
+
+Ritme wordt uitgebracht onder de [GNU Affero General Public License v3.0](LICENSE). Aanpassingen aan een publiek aangeboden webversie moeten daardoor ook als broncode beschikbaar blijven.
