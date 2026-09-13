@@ -16,6 +16,7 @@
             <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="ritme" android:host="pair"/></intent-filter>
         </activity>
         <activity android:name=".NutritionActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".PortraitCaptureActivity" android:exported="false" android:screenOrientation="portrait" android:stateNotNeeded="true" />
         <activity android:name=".PrivacyActivity" android:exported="true">
             <intent-filter><action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" /></intent-filter>
