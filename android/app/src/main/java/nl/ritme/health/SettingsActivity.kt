@@ -108,7 +108,7 @@ class SettingsActivity : ComponentActivity() {
         label(account,"Verbonden met\n${connection.server}",14f,muted)
         button(account,"Privacy & gegevensgebruik",true){startActivity(Intent(this,PrivacyActivity::class.java))}
         button(account,"Telefoon ontkoppelen",true){confirmDisconnect(connection)}
-        label(content,"Ritme 1.2.1",12f,muted)
+        label(content,"Ritme 1.2.2",12f,muted)
     }
 
     private fun confirmDisconnect(connection:Connection){
