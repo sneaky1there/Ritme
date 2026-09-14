@@ -26,7 +26,7 @@ Je kunt toestemming intrekken in Health Connect en synchronisatie stoppen in dez
 
 Voor vragen of verwijdering gebruik je het beheer van je eigen website. Deze persoonlijke app heeft geen centrale Ritme-cloud of externe gegevensbeheerder.
 
-Versie 1.2.1 · 13 september 2026"""
+Versie 1.2.2 · 14 september 2026"""
         }
         val scroll=ScrollView(this).apply{addView(text)}
         scroll.setOnApplyWindowInsetsListener {v,i->v.setPadding(i.systemWindowInsetLeft,i.systemWindowInsetTop,i.systemWindowInsetRight,i.systemWindowInsetBottom);i}
