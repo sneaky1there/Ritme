@@ -1,0 +1,18 @@
+# Secrets and local configuration
+server/config/config.php
+server/logs/*
+!server/logs/.gitkeep
+android/local.properties
+android/signing/
+*.jks
+
+# Build output and local tooling
+.gradle/
+.gradle-home/
+.kotlin/
+.tools/
+.android-sdk/
+**/build/
+*.log
+*.zip
+.DS_Store

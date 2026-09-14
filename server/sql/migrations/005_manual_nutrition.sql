@@ -1,0 +1,11 @@
+-- Eigen dagelijkse calorie- en macroregistratie. Opnieuw uitvoeren is veilig.
+CREATE TABLE IF NOT EXISTS nutrition_daily (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ date DATE NOT NULL UNIQUE,
+ calories_kcal DECIMAL(8,2) NULL,
+ protein_g DECIMAL(8,2) NULL,
+ carbohydrates_g DECIMAL(8,2) NULL,
+ fat_g DECIMAL(8,2) NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
